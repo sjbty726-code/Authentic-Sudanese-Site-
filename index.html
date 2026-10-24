@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090d1b">
+  <meta name="description" content="ود فيصل — محرر مواقع بواجهة عربية ومعاينة مباشرة." />
+  <title>ود فيصل | مختبر البرمجة العربي</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="landing-mode">
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+
+  <main id="landing" class="landing">
+    <nav class="landing-nav">
+      <a class="brand brand-large" href="#home" aria-label="ود فيصل">
+        <span class="brand-mark"><span class="brand-mark-inner">و</span></span>
+        <span class="brand-copy"><strong>ود فيصل</strong><small>مختبر البرمجة العربي</small></span>
+      </a>
+      <span class="nav-pill"><span class="status-dot"></span> مساحة إبداعك جاهزة</span>
+    </nav>
+
+    <section class="hero-content" id="home">
+      <div class="hero-kicker"><span class="sparkle">✦</span> فكرتك تستاهل تطلع للنور</div>
+      <h1>اكتبها <span class="gradient-word">بالعربي.</span><br>وشوفها <span class="outline-word">قدامك.</span></h1>
+      <p class="hero-description">موقعك يبدأ من سطر بسيط، ويتحوّل لتجربة حقيقية. اكتب الأوامر العربية، نسّق الألوان، وعاين النتيجة مباشرة — كل شيء في مكان واحد.</p>
+      <div class="hero-actions">
+        <button class="button button-primary button-hero" id="startJourney" type="button">
+          <span>ابدأ الرحلة</span><span class="button-arrow" aria-hidden="true">←</span>
+        </button>
+        <button class="button button-quiet" id="showIntro" type="button"><span class="play-icon">▶</span> كيف يعمل؟</button>
+      </div>
+      <div class="hero-proof"><span class="proof-icon">⌘</span><span>ثلاثة ملفات</span><i></i><span>معاينة فورية</span><i></i><span>واجهة عربية</span></div>
+    </section>
+
+    <div class="flight-stage" aria-hidden="true">
+      <div class="flight-orbit orbit-a"></div><div class="flight-orbit orbit-b"></div>
+      <div class="flight-trail"></div>
+      <div class="hero-plane" id="heroPlane">
+        <svg viewBox="0 0 120 80" role="img" aria-label="طائرة"><path d="M8 43 111 9 80 71 60 51 43 65 41 48Z" fill="currentColor"/><path d="m41 48 39 23-20-20Z" fill="#b8c7ff"/><path d="m8 43 33 5 70-39Z" fill="#fff" opacity=".55"/></svg>
+      </div>
+      <div class="flight-label">وجهتك القادمة: الإبداع <span>↗</span></div>
+    </div>
+    <div class="landing-bottom"><span>صُنع للفكرة الكبيرة</span><span class="bottom-line"></span><span>ود فيصل © 2026</span></div>
+  </main>
+
+  <section id="editorApp" class="editor-app" aria-label="محرر المواقع" hidden>
+    <header class="app-header">
+      <a href="#home" id="backHome" class="brand brand-small" aria-label="الرجوع للبداية">
+        <span class="brand-mark"><span class="brand-mark-inner">و</span></span>
+        <span class="brand-copy"><strong>ود فيصل</strong><small>مختبر البرمجة العربي</small></span>
+      </a>
+      <div class="project-title"><span class="project-dot"></span><div><strong>مشروعي الجديد</strong><small id="saveStatus">تم الحفظ محلياً</small></div></div>
+      <div class="header-actions">
+        <button class="icon-button" id="helpButton" type="button" title="شرح الأوامر" aria-label="شرح الأوامر">؟</button>
+        <button class="button button-secondary" id="uploadButton" type="button">رفع ملفات</button>
+        <input id="fileInput" type="file" accept=".html,.htm,.css,.js,.txt" multiple hidden>
+        <button class="button button-primary" id="exportZip" type="button"><span>↓</span> تصدير المشروع</button>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <div class="toolbar-start">
+        <span class="workspace-label"><span class="workspace-glyph">▦</span> مساحة العمل</span>
+        <label class="mode-select-label" for="languageMode">لغة الكتابة</label>
+        <select id="languageMode" class="select-control" aria-label="لغة كتابة الأوامر">
+          <option value="arabic" selected>الأوامر العربية</option>
+          <option value="native">HTML / CSS / JavaScript</option>
+        </select>
+      </div>
+      <div class="toolbar-end">
+        <label class="auto-toggle"><input id="autoUpdate" type="checkbox" checked><span class="toggle-ui"></span><span>تحديث تلقائي</span></label>
+        <button class="button button-quiet button-small" id="runButton" type="button"><span>▶</span> تشغيل النتيجة</button>
+        <button class="button button-quiet button-small" id="clearButton" type="button">مسح الملفات</button>
+      </div>
+    </div>
+
+    <div class="workspace">
+      <aside class="side-panel">
+        <div class="panel-heading"><span>ملفات المشروع</span><span class="count-badge">3</span></div>
+        <button class="file-item active" data-file="html" type="button"><span class="file-icon html-icon">&lt;/&gt;</span><span class="file-name"><strong>هيكل الصفحة</strong><small>index.html</small></span><span class="file-active-dot"></span></button>
+        <button class="file-item" data-file="css" type="button"><span class="file-icon css-icon">✳</span><span class="file-name"><strong>الألوان والتنسيق</strong><small>style.css</small></span></button>
+        <button class="file-item" data-file="js" type="button"><span class="file-icon js-icon">JS</span><span class="file-name"><strong>التفاعل والحركة</strong><small>script.js</small></span></button>
+        <div class="side-divider"></div>
+        <div class="panel-heading"><span>أوامر سريعة</span><span class="tiny-spark">✦</span></div>
+        <div class="quick-commands" id="quickCommands">
+          <button type="button" data-insert="/عنوان مرحباً بيك يا عالم)" class="command-chip"><b>＋</b> إضافة عنوان</button>
+          <button type="button" data-insert="/نص دي أول تجربة لي في ود فيصل)" class="command-chip"><b>＋</b> إضافة نص</button>
+          <button type="button" data-insert="/زر اضغط هنا)" class="command-chip"><b>＋</b> إضافة زر</button>
+          <button type="button" data-insert="/صورة https://example.com/photo.jpg | وصف الصورة)" class="command-chip"><b>＋</b> إضافة صورة</button>
+        </div>
+        <div class="side-tip"><span class="tip-icon">✦</span><div><strong>لمسة عربية</strong><p>اكتب الأمر بشرطة مائلة <b>/</b> وأنهِ السطر بقوس <b>)</b>.</p></div></div>
+        <div class="side-footer"><span class="online-indicator"></span> يعمل داخل متصفحك <span class="lock-icon">⌑</span></div>
+      </aside>
+
+      <section class="code-panel" aria-label="محرر الكود">
+        <div class="editor-tabs">
+          <div class="tab-left"><span class="editor-heading">المحرر</span><span class="editor-breadcrumb">مشروعي / <b id="currentFileLabel">index.html</b></span></div>
+          <div class="tab-actions"><button id="copyButton" type="button" class="mini-action">نسخ</button><button id="downloadFileButton" type="button" class="mini-action">تنزيل الملف</button></div>
+        </div>
+        <div class="editor-subbar"><span class="language-indicator" id="languageIndicator">لغة ود فيصل</span><span class="encoding-indicator">UTF-8 <i></i> عربي RTL</span></div>
+        <div class="editor-wrap">
+          <div class="line-gutter" id="lineGutter" aria-hidden="true">1</div>
+          <textarea id="htmlEditor" class="code-editor active" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="محرر هيكل الصفحة" dir="auto"></textarea>
+          <textarea id="cssEditor" class="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="محرر الألوان والتنسيق" dir="auto" hidden></textarea>
+          <textarea id="jsEditor" class="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="محرر التفاعل والحركة" dir="auto" hidden></textarea>
+        </div>
+        <div class="editor-status"><span id="lineInfo">السطر 1، العمود 1</span><span id="charInfo">0 حرف</span><span class="status-ready"><i></i> جاهز للكتابة</span></div>
+        <div class="syntax-help"><div><span class="help-bullet">✦</span><span>مثال: <code>/عنوان أهلاً بالعالم)</code></span></div><button type="button" id="syntaxHelpButton">شوف كل الأوامر <span>←</span></button></div>
+      </section>
+
+      <section class="preview-panel" aria-label="معاينة النتيجة">
+        <div class="preview-topbar"><div><span class="preview-live-dot"></span><strong>المعاينة المباشرة</strong><small>النتيجة النهائية</small></div><button id="fullscreenButton" type="button" class="preview-icon-button" aria-label="ملء الشاشة" title="ملء الشاشة">⛶</button></div>
+        <div class="device-toolbar" role="group" aria-label="حجم المعاينة">
+          <button class="device-button active" data-device="desktop" type="button"><span>▰</span> كمبيوتر</button>
+          <button class="device-button" data-device="tablet" type="button"><span>▤</span> لوحي</button>
+          <button class="device-button" data-device="mobile" type="button"><span>▯</span> هاتف</button>
+        </div>
+        <div class="preview-stage" id="previewStage">
+          <div class="browser-frame" id="browserFrame">
+            <div class="browser-chrome"><div class="browser-dots"><i></i><i></i><i></i></div><div class="browser-address"><span>⌑</span> معاينة موقعي</div><span class="browser-menu">···</span></div>
+            <iframe id="previewFrame" title="معاينة الموقع" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe>
+          </div>
+        </div>
+        <div class="preview-footer"><span><i class="preview-live-dot"></i> <b>مباشر</b> — النتيجة تتحدث مع الكتابة</span><button type="button" id="openPreviewTab">فتح النتيجة ↗</button></div>
+      </section>
+    </div>
+    <footer class="app-footer"><span>ود فيصل <b>✦</b> مساحة للكود والأفكار</span><span>الملفات محفوظة على جهازك في هذا المتصفح</span></footer>
+  </section>
+
+  <div class="modal-backdrop" id="helpModal" hidden>
+    <section class="help-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head"><div><span class="modal-eyebrow">دليل سريع</span><h2 id="modalTitle">اكتب أوامرك بالعربي</h2></div><button class="icon-button" id="closeHelp" type="button" aria-label="إغلاق">×</button></div>
+      <p class="modal-intro">في وضع الأوامر العربية، كل أمر في سطر مستقل. ابدأ بـ <code>/</code> وأنهِ الأمر بـ <code>)</code>. النصوص والألوان تتحول تلقائياً لصفحة قابلة للمعاينة.</p>
+      <div class="syntax-list">
+        <div><code>/عنوان مرحباً يا عالم)</code><span>عنوان كبير</span></div>
+        <div><code>/عنوان2 عنوان أصغر)</code><span>عنوان فرعي</span></div>
+        <div><code>/نص هذا نص تجريبي)</code><span>فقرة نصية</span></div>
+        <div><code>/زر اضغط هنا)</code><span>زر تفاعلي</span></div>
+        <div><code>/رابط https://example.com | افتح الرابط)</code><span>رابط قابل للنقر</span></div>
+        <div><code>/صورة https://example.com/p.jpg | وصف الصورة)</code><span>صورة</span></div>
+        <div><code>/خلفية #10172a)</code><span>لون الخلفية — في ملف التنسيق</span></div>
+        <div><code>/لون #f4f6ff)</code><span>لون النص — في ملف التنسيق</span></div>
+        <div><code>/حجم الخط 18px)</code><span>حجم النص — في ملف التنسيق</span></div>
+        <div><code>/محاذاة وسط)</code><span>محاذاة المحتوى — في ملف التنسيق</span></div>
+        <div><code>/عند الضغط على زر اضغط هنا اعرض تنبيه أهلاً بيك)</code><span>تفاعل — في ملف التفاعل</span></div>
+      </div>
+      <div class="modal-note"><span>!</span> الأوامر العربية اختصار سهل. وضع HTML / CSS / JavaScript يسمح بكتابة اللغة الأصلية كاملة.</div>
+      <button id="tryExample" class="button button-primary modal-cta" type="button">جرّب المثال <span>←</span></button>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="script.js"></script>
+</body>
+</html>
