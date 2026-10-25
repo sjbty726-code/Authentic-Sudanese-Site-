@@ -1,3 +1,4 @@
+
 (() => {
   'use strict';
 
@@ -1047,6 +1048,9 @@ android {
   document.addEventListener('keydown', event => { if (event.key === 'Escape') closeHelpModal(); });
   els.tryExample.addEventListener('click', useExample);
 
+  // إتاحة مولّد ZIP الداخلي لمساحة تحويل الصور مع المحافظة على وظيفة التصدير الحالية.
+  window.WadFaisalBuildZip = buildZip;
+
   // بدء التشغيل
   els.html.value = DEFAULTS.html;
   els.css.value = DEFAULTS.css;
@@ -1055,4 +1059,371 @@ android {
   switchFile('html');
   updateEditorStats();
   renderPreview();
+})();
+
+
+/* ============================================================
+   ميزة مستقلة: تحليل صور واجهات المستخدم وتوليد HTML/CSS/JS عبر Gemini.
+   ملاحظة: المفتاحان مضمّنان علناً بناءً على طلب مالك المشروع.
+   ============================================================ */
+(() => {
+  'use strict';
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+  const page = {
+    body: document.body,
+    editor: $('#editorApp'),
+    apk: $('#apkWorkspace'),
+    workspace: $('#imageCodeWorkspace'),
+    open: $('#imageToCodeButton'),
+    back: $('#backToEditorFromImage'),
+    newTask: $('#imageCodeNewTask'),
+    input: $('#imageCodeInput'),
+    dropzone: $('#imageCodeDropzone'),
+    images: $('#imageCodeImages'),
+    prompt: $('#imageCodePrompt'),
+    generate: $('#generateFromImages'),
+    status: $('#imageCodeStatus'),
+    tabs: $$('.image-code-file-tab'),
+    html: $('#generatedHtml'),
+    css: $('#generatedCss'),
+    js: $('#generatedJs'),
+    copy: $('#copyGeneratedFile'),
+    download: $('#downloadGeneratedFile'),
+    zip: $('#downloadGeneratedZip'),
+    preview: $('#generatedPreview'),
+    refresh: $('#refreshGeneratedPreview')
+  };
+  if (!page.workspace || !page.generate) return;
+
+  // المفاتيح التي زوّد بها مالك الموقع، الأحدث يُجرَّب أولاً ثم البديل.
+  // أي مفتاح داخل JavaScript عام يمكن لزوار الموقع استخراجه.
+  const GEMINI_API_KEYS = [
+    'AQ.Ab8RN6I6Kfo8jJJEawUVNdE5uTK8AA5GYbRc0VqvlV9-JAMT6g',
+    'AQ.Ab8RN6IU8Ihr0tChrgD8Z1mVwIWf8PjXaVDfELY5hiQwm1Flug'
+  ];
+  const GEMINI_MODEL = 'gemini-3.8-flash';
+  const FILES = {
+    html: { name: 'index.html', element: page.html },
+    css: { name: 'style.css', element: page.css },
+    js: { name: 'script.js', element: page.js }
+  };
+  let activeFile = 'html';
+  let selectedImages = [];
+  let lastPreview = '';
+
+  function imageStatus(state, title, message) {
+    page.status.dataset.state = state;
+    const strong = document.createElement('strong');
+    strong.textContent = title;
+    const p = document.createElement('p');
+    p.textContent = message;
+    const body = document.createElement('div');
+    body.append(strong, p);
+    const dot = document.createElement('span');
+    dot.className = 'image-code-status-dot';
+    page.status.replaceChildren(dot, body);
+  }
+
+  function showImageWorkspace() {
+    if (page.editor) page.editor.hidden = true;
+    if (page.apk) page.apk.hidden = true;
+    const landing = $('#landing');
+    if (landing) landing.hidden = true;
+    page.workspace.hidden = false;
+    page.body.classList.remove('landing-mode', 'editor-mode', 'apk-mode');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function backToEditor() {
+    page.workspace.hidden = true;
+    if (page.editor) page.editor.hidden = false;
+    if (page.apk) page.apk.hidden = true;
+    const landing = $('#landing');
+    if (landing) landing.hidden = true;
+    page.body.classList.remove('landing-mode', 'apk-mode');
+    page.body.classList.add('editor-mode');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function setActiveFile(key) {
+    if (!FILES[key]) return;
+    activeFile = key;
+    for (const [name, file] of Object.entries(FILES)) file.element.hidden = name !== key;
+    page.tabs.forEach(tab => {
+      const active = tab.dataset.generatedFile === key;
+      tab.classList.toggle('active', active);
+      tab.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+  }
+
+  function renderSelectedImages() {
+    page.images.replaceChildren();
+    if (!selectedImages.length) {
+      const empty = document.createElement('div');
+      empty.className = 'image-code-empty';
+      empty.textContent = 'ما رفعت صور لحد الآن.';
+      page.images.append(empty);
+      return;
+    }
+    selectedImages.forEach((file, index) => {
+      const card = document.createElement('div');
+      card.className = 'image-code-image-item';
+      const img = document.createElement('img');
+      img.alt = file.name || `الصورة ${index + 1}`;
+      img.src = URL.createObjectURL(file);
+      img.onload = () => URL.revokeObjectURL(img.src);
+      const name = document.createElement('span');
+      name.textContent = file.name || `image-${index + 1}`;
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.textContent = '×';
+      remove.setAttribute('aria-label', `إزالة ${file.name || 'الصورة'}`);
+      remove.addEventListener('click', () => {
+        selectedImages.splice(index, 1);
+        renderSelectedImages();
+        imageStatus('idle', 'جاهز', selectedImages.length ? `تم اختيار ${selectedImages.length} صورة.` : 'ارفع الصور أولاً ثم اضغط زر التوليد.');
+      });
+      card.append(img, name, remove);
+      page.images.append(card);
+    });
+  }
+
+  function addImages(list) {
+    const incoming = [...(list || [])].filter(file => file.type && file.type.startsWith('image/'));
+    if (!incoming.length) {
+      imageStatus('error', 'ما لقينا صور', 'اختار ملفات صور من نوع PNG أو JPG أو WEBP.');
+      return;
+    }
+    const total = selectedImages.length + incoming.length;
+    if (total > 5) {
+      imageStatus('error', 'عدد الصور كبير', 'المسموح 5 صور في كل طلب. أزل بعض الصور ثم حاول مرة ثانية.');
+      return;
+    }
+    const oversized = incoming.find(file => file.size > 8 * 1024 * 1024);
+    if (oversized) {
+      imageStatus('error', 'حجم الصورة كبير', `الصورة ${oversized.name} أكبر من 8 ميغابايت. صغّرها ثم ارفعها مرة ثانية.`);
+      return;
+    }
+    selectedImages = selectedImages.concat(incoming);
+    renderSelectedImages();
+    imageStatus('idle', 'الصور جاهزة', `تم اختيار ${selectedImages.length} صورة. اكتب طلبك الإضافي ثم اضغط التوليد.`);
+  }
+
+  async function imageToJpegData(file) {
+    // ضغط الصورة لتقليل حجم الطلب مع الحفاظ على تفاصيل التصميم.
+    if (typeof createImageBitmap === 'function') {
+      const bitmap = await createImageBitmap(file);
+      const maxSide = 1600;
+      const ratio = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+      const width = Math.max(1, Math.round(bitmap.width * ratio));
+      const height = Math.max(1, Math.round(bitmap.height * ratio));
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext('2d', { alpha: false });
+      if (!ctx) throw new Error('متصفحك لا يدعم تجهيز الصور. جرّب متصفحاً أحدث.');
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(bitmap, 0, 0, width, height);
+      bitmap.close?.();
+      const blob = await new Promise((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('فشل ضغط الصورة')), 'image/jpeg', 0.86));
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('تعذرت قراءة الصورة'));
+        reader.readAsDataURL(blob);
+      });
+      return { mimeType: 'image/jpeg', data: dataUrl.split(',')[1] || '' };
+    }
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('تعذرت قراءة الصورة'));
+      reader.readAsDataURL(file);
+    });
+    const comma = dataUrl.indexOf(',');
+    return { mimeType: file.type || 'image/png', data: comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl };
+  }
+
+  function extractJson(response) {
+    const parts = response?.candidates?.[0]?.content?.parts || [];
+    let text = parts.map(part => part.text || '').join('\n').trim();
+    if (!text) throw new Error('الذكاء الاصطناعي رجّع نتيجة فارغة. جرّب وصفاً أوضح أو صوراً أقل.');
+    text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    const first = text.indexOf('{');
+    const last = text.lastIndexOf('}');
+    if (first >= 0 && last > first) text = text.slice(first, last + 1);
+    let result;
+    try { result = JSON.parse(text); }
+    catch (_) { throw new Error('وصلتنا نتيجة لكن تنسيق الملفات غير مكتمل. اضغط توليد مرة أخرى.'); }
+    const html = typeof result.html === 'string' ? result.html : (typeof result['index.html'] === 'string' ? result['index.html'] : '');
+    const css = typeof result.css === 'string' ? result.css : (typeof result['style.css'] === 'string' ? result['style.css'] : '');
+    const js = typeof result.js === 'string' ? result.js : (typeof result['script.js'] === 'string' ? result['script.js'] : '');
+    if (!html.trim() || !css.trim()) throw new Error('النتيجة ما فيها HTML وCSS كاملين. جرّب توليد مرة ثانية.');
+    return { html, css, js };
+  }
+
+  async function callGemini(parts) {
+    let lastError = null;
+    for (let index = 0; index < GEMINI_API_KEYS.length; index++) {
+      const apiKey = GEMINI_API_KEYS[index];
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts }],
+            generationConfig: { responseMimeType: 'application/json', temperature: 0.2 }
+          })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const detail = data?.error?.message || `HTTP ${response.status}`;
+          lastError = new Error(detail);
+          // جرّب المفتاح البديل عند مشاكل المفتاح أو الحصة، لا عند أخطاء الطلب العادية.
+          if ([400, 401, 403, 429].includes(response.status) && index < GEMINI_API_KEYS.length - 1) continue;
+          throw lastError;
+        }
+        return extractJson(data);
+      } catch (error) {
+        lastError = error;
+        if (index === GEMINI_API_KEYS.length - 1) break;
+      }
+    }
+    const message = lastError?.message || 'تعذر الاتصال بخدمة Gemini.';
+    if (/API key|authentication|unauthenticated|credential|permission|access token|401/i.test(message)) {
+      throw new Error('مفتاح API لم يُقبل من Gemini. راجع المفتاح وصلاحيته في Google AI Studio.');
+    }
+    if (/quota|rate|429|resource exhausted/i.test(message)) {
+      throw new Error('تم الوصول إلى حد الاستخدام أو الطلبات. جرّب لاحقاً أو استخدم مفتاحاً لديه حصة متاحة.');
+    }
+    if (/fetch|network|failed to fetch|load failed/i.test(message)) {
+      throw new Error('الاتصال فشل. تأكد من الإنترنت وافتح الموقع عبر HTTPS ثم جرّب مرة أخرى.');
+    }
+    throw new Error(message.slice(0, 260));
+  }
+
+  async function generateFromImages() {
+    if (!selectedImages.length) {
+      imageStatus('error', 'ارفع صورة أولاً', 'اضغط «اختيار الصور» وحدد صورة واجهة واحدة على الأقل.');
+      return;
+    }
+    if (selectedImages.length > 5) {
+      imageStatus('error', 'عدد الصور كبير', 'المسموح 5 صور في كل طلب.');
+      return;
+    }
+    page.generate.disabled = true;
+    page.generate.textContent = 'جارٍ تحليل الصور وإنشاء الملفات…';
+    imageStatus('working', 'جارٍ تحليل الواجهة', 'نرسل الصور والوصف إلى Gemini. قد تحتاج النتيجة بعض الوقت حسب عدد الصور وحجمها.');
+    try {
+      const prompt = [
+        'You are an expert front-end developer. Analyze the attached screenshot(s) of a website or app UI and recreate the visible design as three separate production-quality files.',
+        'Return ONLY a valid JSON object with exactly these string keys: "html", "css", "js". Do not use markdown fences.',
+        'html must be a complete standalone index.html document in Arabic-friendly UTF-8 where appropriate. Link to style.css and script.js using relative paths. Do not put CSS or JS inline unless absolutely needed for a small preview-only fallback.',
+        'css must be the complete style.css, responsive for mobile and desktop, closely matching the screenshots: layout, spacing, typography, colors, borders, shadows, radii and visible states.',
+        'js must be the complete script.js, implementing visible interactions where reasonably inferable. Use accessible controls and safe DOM practices. Do not use external libraries unless necessary; no backend secrets and no unsafe eval.',
+        'When several screenshots are provided, treat them as screens/pages/states of the same project unless the prompt says otherwise. Make navigation and buttons connect these screens where appropriate.',
+        'If screenshot text is readable, reproduce it as accurately as possible. Use placeholder assets only for imagery that cannot be represented otherwise. Do not claim any hidden backend feature is real when only a screenshot is provided.',
+        `Additional user instructions (Arabic): ${page.prompt.value.trim() || 'أعد إنشاء الواجهة الظاهرة بأقرب شكل ممكن.'}`,
+        `Current image count: ${selectedImages.length}.`
+      ].join('\n\n');
+      const parts = [{ text: prompt }];
+      for (const file of selectedImages) {
+        const image = await imageToJpegData(file);
+        if (!image.data) throw new Error(`تعذّر تجهيز الصورة ${file.name || ''}.`);
+        parts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
+      }
+      const result = await callGemini(parts);
+      page.html.value = result.html;
+      page.css.value = result.css;
+      page.js.value = result.js;
+      setActiveFile('html');
+      renderGeneratedPreview();
+      imageStatus('success', 'اكتملت الملفات', 'تم إنشاء index.html وstyle.css وscript.js. راجع المعاينة ثم انسخ الملفات أو نزّلها ZIP.');
+    } catch (error) {
+      console.error('Image-to-code error:', error);
+      imageStatus('error', 'ما قدرنا نكمل التوليد', error?.message || 'حدث خطأ غير معروف. جرّب مرة ثانية.');
+    } finally {
+      page.generate.disabled = false;
+      page.generate.innerHTML = '<span>✦</span> حلّل الصور وأنشئ الملفات';
+    }
+  }
+
+  function makePreviewDocument() {
+    let html = page.html.value.trim();
+    const css = page.css.value.replace(/<\/style/gi, '<\\/style');
+    const js = page.js.value.replace(/<\/script/gi, '<\\/script');
+    if (!html) html = '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><main><h1>معاينة الكود الناتج</h1><p>اكتب HTML ثم حدّث المعاينة.</p></main></body></html>';
+    html = html.replace(/<link\b[^>]*href\s*=\s*(["'])style\.css\1[^>]*>/gi, '');
+    html = html.replace(/<script\b[^>]*src\s*=\s*(["'])script\.js\1[^>]*>\s*<\/script\s*>/gi, '');
+    const styleTag = `<style>\n${css}\n</style>`;
+    const scriptTag = `<script>\n${js}\n<\/script>`;
+    if (/<\/head\s*>/i.test(html)) html = html.replace(/<\/head\s*>/i, `${styleTag}</head>`);
+    else if (/<html\b[^>]*>/i.test(html)) html = html.replace(/<html\b[^>]*>/i, match => `${match}<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${styleTag}</head>`);
+    else html = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${styleTag}</head><body>${html}</body></html>`;
+    if (/<\/body\s*>/i.test(html)) html = html.replace(/<\/body\s*>/i, `${scriptTag}</body>`);
+    else html += scriptTag;
+    return html;
+  }
+
+  function renderGeneratedPreview() {
+    lastPreview = makePreviewDocument();
+    page.preview.srcdoc = lastPreview;
+  }
+
+  function downloadBlob(filename, blob) {
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url; anchor.download = filename; anchor.style.display = 'none';
+    document.body.append(anchor); anchor.click(); anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+  }
+  function downloadCurrentGeneratedFile() {
+    const file = FILES[activeFile];
+    downloadBlob(file.name, new Blob([file.element.value], { type: 'text/plain;charset=utf-8' }));
+  }
+  async function copyCurrentGeneratedFile() {
+    const text = FILES[activeFile].element.value;
+    try {
+      await navigator.clipboard.writeText(text);
+      imageStatus('success', 'تم النسخ', `تم نسخ محتوى ${FILES[activeFile].name}.`);
+    } catch (_) {
+      const editor = FILES[activeFile].element;
+      editor.focus(); editor.select();
+      const ok = document.execCommand('copy');
+      imageStatus(ok ? 'success' : 'idle', ok ? 'تم النسخ' : 'انسخ يدوياً', ok ? `تم نسخ ${FILES[activeFile].name}.` : 'حدّد النص وانسخه من لوحة المفاتيح.');
+    }
+  }
+  function downloadGeneratedZip() {
+    const entries = Object.entries(FILES).map(([key, file]) => ({ name: file.name, data: file.element.value }));
+    entries.push({ name: 'README-AR.txt', data: 'مشروع مولد من الصور عبر ود فيصل.\n\nالملفات: index.html وstyle.css وscript.js\nافتح index.html في متصفح حديث، وتأكد من اختبار الكود قبل النشر.\n' });
+    if (typeof window.WadFaisalBuildZip !== 'function') {
+      imageStatus('error', 'ميزة ZIP غير جاهزة', 'حدّث script.js إلى النسخة الجديدة ثم أعد تحميل الصفحة.');
+      return;
+    }
+    downloadBlob('wad-faisal-image-to-code.zip', window.WadFaisalBuildZip(entries));
+    imageStatus('success', 'تم تجهيز ZIP', 'حمّل الملف المضغوط وافتحه لتحصل على الملفات الثلاثة المستقلة.');
+  }
+
+  page.open.addEventListener('click', showImageWorkspace);
+  page.back.addEventListener('click', backToEditor);
+  page.input.addEventListener('change', event => { addImages(event.target.files); page.input.value = ''; });
+  page.dropzone.addEventListener('click', () => page.input.click());
+  page.dropzone.addEventListener('dragover', event => { event.preventDefault(); page.dropzone.classList.add('dragover'); });
+  page.dropzone.addEventListener('dragleave', () => page.dropzone.classList.remove('dragover'));
+  page.dropzone.addEventListener('drop', event => { event.preventDefault(); page.dropzone.classList.remove('dragover'); addImages(event.dataTransfer?.files); });
+  page.newTask.addEventListener('click', () => {
+    selectedImages = [];
+    page.prompt.value = 'أنشئ واجهة قريبة جداً من الصور المرفوعة. التزم بترتيب العناصر والألوان والمسافات والخطوط الظاهرة. اجعلها متجاوبة مع الهاتف والكمبيوتر، وأضف التفاعلات المنطقية للعناصر الواضحة. اللغة العربية واتجاه RTL إذا كانت الصورة عربية.';
+    for (const file of Object.values(FILES)) file.element.value = '';
+    renderSelectedImages(); setActiveFile('html'); renderGeneratedPreview();
+    imageStatus('idle', 'مشروع جديد', 'ارفع صوراً جديدة ثم ابدأ التوليد.');
+  });
+  page.generate.addEventListener('click', generateFromImages);
+  page.tabs.forEach(tab => tab.addEventListener('click', () => setActiveFile(tab.dataset.generatedFile)));
+  Object.values(FILES).forEach(file => file.element.addEventListener('input', renderGeneratedPreview));
+  page.copy.addEventListener('click', copyCurrentGeneratedFile);
+  page.download.addEventListener('click', downloadCurrentGeneratedFile);
+  page.zip.addEventListener('click', downloadGeneratedZip);
+  page.refresh.addEventListener('click', renderGeneratedPreview);
+  renderSelectedImages();
+  renderGeneratedPreview();
 })();
