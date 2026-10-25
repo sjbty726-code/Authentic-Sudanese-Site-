@@ -47,6 +47,7 @@
       <div class="header-actions">
         <button class="icon-button" id="helpButton" type="button" title="شرح الأوامر" aria-label="شرح الأوامر">؟</button>
         <button class="button button-secondary" id="uploadButton" type="button">رفع ملفات</button>
+        <button class="button button-secondary image-code-open" id="imageToCodeButton" type="button">صورة إلى كود ✦</button>
         <input id="fileInput" type="file" accept=".html,.htm,.css,.js,.txt" multiple hidden>
         <button class="button button-secondary" id="apkButton" type="button">تحويل إلى APK</button>
         <button class="button button-primary" id="exportZip" type="button"><span>↓</span> تصدير المشروع</button>
@@ -104,6 +105,45 @@
       <section class="apk-card apk-help-card"><div class="apk-card-number">03</div><div class="apk-card-content"><h2>كيف تنزّل APK؟</h2><ol><li>نزّل ZIP من الخطوة الأولى وفك ضغطه.</li><li>ارفع محتويات المجلد إلى مستودع GitHub جديد، مع الحفاظ على مجلد <code>.github/workflows</code>.</li><li>افتح تبويب <code>Actions</code>. يبدأ البناء تلقائياً بعد رفع الملفات، أو شغّل <code>Build Android APK</code> يدوياً.</li><li>عند نجاح البناء، افتح أحدث تشغيل ثم قسم <code>Artifacts</code> ونزّل <code>wad-faisal-debug-apk</code>.</li></ol><p class="apk-small-note">لو فشل البناء، ستعرض هذه الواجهة اسم المهمة والخطوة الفاشلة للمستودعات العامة. افتح سجل التشغيل في GitHub لعرض رسالة الخطأ الكاملة. المستودعات الخاصة تحتاج صلاحية دخول لا توفرها صفحة HTML العامة.</p></div></section>
     </main>
     <footer class="app-footer apk-footer"><span>ود فيصل <b>✦</b> تجهيز APK عبر GitHub Actions</span><span>لن نطلب منك لصق رمز وصول GitHub داخل الصفحة</span></footer>
+  </section>
+
+  <!-- مساحة مستقلة لتحويل صور الواجهات إلى ملفات HTML/CSS/JS عبر Gemini -->
+  <section id="imageCodeWorkspace" class="image-code-workspace" hidden aria-label="تحويل صور الواجهات إلى كود">
+    <header class="image-code-header">
+      <button id="backToEditorFromImage" class="button button-secondary" type="button">→ الرجوع للمحرر</button>
+      <div class="image-code-brand"><span class="image-code-mark">✦</span><div><strong>حوّل الصورة إلى كود</strong><small>HTML · CSS · JavaScript</small></div></div>
+      <button id="imageCodeNewTask" class="button button-primary" type="button">مشروع جديد +</button>
+    </header>
+    <main class="image-code-main">
+      <div class="image-code-intro"><span class="image-code-eyebrow">من لقطة شاشة إلى واجهة قابلة للتعديل</span><h1>ارفع الصورة، <span>وخلي الكود علينا.</span></h1><p>ارفع صورة واحدة أو عدة صور للشاشات المختلفة. سيحلّل الذكاء الاصطناعي ترتيب العناصر والألوان والخطوط، ثم ينشئ لك ثلاثة ملفات مستقلة ومعاينة تفاعلية.</p></div>
+      <div class="image-code-grid">
+        <section class="image-code-card image-code-input-card">
+          <div class="image-code-card-title"><span class="image-code-number">01</span><div><h2>صور الواجهة</h2><p>صور PNG أو JPG أو WEBP — بحد أقصى 5 صور</p></div></div>
+          <input id="imageCodeInput" type="file" accept="image/*" multiple hidden>
+          <button id="imageCodeDropzone" class="image-code-dropzone" type="button"><span class="image-code-upload-icon">↥</span><strong>اضغط هنا لاختيار الصور</strong><span>تقدر ترفع لقطة واحدة أو لقطات متعددة</span><small>الصور تُرسل إلى خدمة Gemini لتحليلها عند الضغط على التوليد.</small></button>
+          <div id="imageCodeImages" class="image-code-images" aria-live="polite"><div class="image-code-empty">ما رفعت صور لحد الآن.</div></div>
+          <label class="image-code-label" for="imageCodePrompt">وصف إضافي (اختياري)</label>
+          <textarea id="imageCodePrompt" class="image-code-prompt" rows="4" placeholder="مثلاً: خلّي التصميم مناسب للهاتف، الأزرار تشتغل، واستخدم اللغة العربية واتجاه RTL.">أنشئ واجهة قريبة جداً من الصور المرفوعة. التزم بترتيب العناصر والألوان والمسافات والخطوط الظاهرة. اجعلها متجاوبة مع الهاتف والكمبيوتر، وأضف التفاعلات المنطقية للعناصر الواضحة. اللغة العربية واتجاه RTL إذا كانت الصورة عربية.</textarea>
+          <button id="generateFromImages" class="button button-primary image-code-generate" type="button"><span>✦</span> حلّل الصور وأنشئ الملفات</button>
+          <div id="imageCodeStatus" class="image-code-status" data-state="idle" role="status" aria-live="polite"><span class="image-code-status-dot"></span><div><strong>جاهز</strong><p>ارفع الصور أولاً ثم اضغط زر التوليد.</p></div></div>
+          <p class="image-code-privacy-note">لا ترفع صوراً تحتوي على كلمات مرور أو بيانات شخصية حساسة. مفتاح API مضبوط داخل JavaScript حسب إعداد المشروع، لذلك يمكن لزوار الموقع رؤيته واستخدامه.</p>
+        </section>
+        <section class="image-code-card image-code-output-card">
+          <div class="image-code-card-title"><span class="image-code-number">02</span><div><h2>الملفات الناتجة</h2><p>عدّل الكود هنا أو انسخه أو نزّله</p></div></div>
+          <div class="image-code-file-tabs" role="tablist" aria-label="ملفات الناتج">
+            <button type="button" class="image-code-file-tab active" data-generated-file="html" role="tab" aria-selected="true">index.html</button>
+            <button type="button" class="image-code-file-tab" data-generated-file="css" role="tab" aria-selected="false">style.css</button>
+            <button type="button" class="image-code-file-tab" data-generated-file="js" role="tab" aria-selected="false">script.js</button>
+          </div>
+          <div class="image-code-editor-wrap"><textarea id="generatedHtml" class="image-code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="محتوى ملف index.html" placeholder="سيظهر كود HTML هنا..."></textarea><textarea id="generatedCss" class="image-code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="محتوى ملف style.css" placeholder="سيظهر كود CSS هنا..." hidden></textarea><textarea id="generatedJs" class="image-code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="محتوى ملف script.js" placeholder="سيظهر كود JavaScript هنا..." hidden></textarea></div>
+          <div class="image-code-file-actions"><button id="copyGeneratedFile" class="button button-secondary" type="button">نسخ الملف</button><button id="downloadGeneratedFile" class="button button-secondary" type="button">تنزيل الملف</button><button id="downloadGeneratedZip" class="button button-primary" type="button">تنزيل الثلاثة ZIP ↓</button></div>
+          <div class="image-code-preview-head"><div><span class="preview-live-dot"></span><strong>معاينة الكود الناتج</strong></div><button id="refreshGeneratedPreview" type="button">تحديث المعاينة ↻</button></div>
+          <div class="image-code-preview-wrap"><iframe id="generatedPreview" title="معاينة الواجهة الناتجة" sandbox="allow-scripts allow-forms allow-modals allow-popups" referrerpolicy="no-referrer"></iframe></div>
+          <p class="image-code-preview-note">المعاينة تعمل داخل إطار معزول. راجع الكود واختبره قبل نشره.</p>
+        </section>
+      </div>
+    </main>
+    <footer class="app-footer image-code-footer"><span>ود فيصل <b>✦</b> تحويل الصور إلى كود</span><span>هذه مساحة مستقلة — محرر الأوامر العربية محفوظ كما هو</span></footer>
   </section>
 
   <div class="modal-backdrop" id="helpModal" hidden><section class="help-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-head"><div><span class="modal-eyebrow">دليل سريع</span><h2 id="modalTitle">اكتب أوامرك بالعربي الطبيعي</h2></div><button class="icon-button" id="closeHelp" type="button" aria-label="إغلاق">×</button></div><p class="modal-intro">اكتب الأمر بالعربي في سطر عادي. لا تحتاج شرطة مائلة <code>/</code> ولا قوس إغلاق <code>)</code>. التغييرات تظهر تلقائياً في المعاينة.</p><div class="syntax-list">
