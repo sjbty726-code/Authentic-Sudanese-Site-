@@ -1,19 +1,54 @@
-
 (() => {
   'use strict';
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+
   const els = {
-    body: document.body, landing: $('#landing'), editorApp: $('#editorApp'), apkWorkspace: $('#apkWorkspace'),
-    start: $('#startJourney'), showIntro: $('#showIntro'), plane: $('#heroPlane'), backHome: $('#backHome'),
-    backToEditor: $('#backToEditor'), apkButton: $('#apkButton'), prepareApkProject: $('#prepareApkProject'),
-    githubRepoUrl: $('#githubRepoUrl'), checkBuildStatus: $('#checkBuildStatus'), openGithubActions: $('#openGithubActions'),
-    buildStatus: $('#buildStatus'), buildDetails: $('#buildDetails'),
-    html: $('#htmlEditor'), css: $('#cssEditor'), js: $('#jsEditor'), gutter: $('#lineGutter'), currentFileLabel: $('#currentFileLabel'), languageIndicator: $('#languageIndicator'), languageMode: $('#languageMode'),
-    autoUpdate: $('#autoUpdate'), run: $('#runButton'), clear: $('#clearButton'), copy: $('#copyButton'), download: $('#downloadFileButton'), exportZip: $('#exportZip'), fileInput: $('#fileInput'), upload: $('#uploadButton'),
-    previewFrame: $('#previewFrame'), browserFrame: $('#browserFrame'), fullscreen: $('#fullscreenButton'), openPreview: $('#openPreviewTab'), saveStatus: $('#saveStatus'), lineInfo: $('#lineInfo'), charInfo: $('#charInfo'),
-    helpButton: $('#helpButton'), syntaxHelpButton: $('#syntaxHelpButton'), modal: $('#helpModal'), closeHelp: $('#closeHelp'), tryExample: $('#tryExample'), toast: $('#toast')
+    body: document.body,
+    landing: $('#landing'),
+    editorApp: $('#editorApp'),
+    apkWorkspace: $('#apkWorkspace'),
+    start: $('#startJourney'),
+    showIntro: $('#showIntro'),
+    plane: $('#heroPlane'),
+    backHome: $('#backHome'),
+    backToEditor: $('#backToEditor'),
+    apkButton: $('#apkButton'),
+    prepareApkProject: $('#prepareApkProject'),
+    githubRepoUrl: $('#githubRepoUrl'),
+    checkBuildStatus: $('#checkBuildStatus'),
+    openGithubActions: $('#openGithubActions'),
+    buildStatus: $('#buildStatus'),
+    buildDetails: $('#buildDetails'),
+    html: $('#htmlEditor'),
+    css: $('#cssEditor'),
+    js: $('#jsEditor'),
+    gutter: $('#lineGutter'),
+    currentFileLabel: $('#currentFileLabel'),
+    languageIndicator: $('#languageIndicator'),
+    languageMode: $('#languageMode'),
+    autoUpdate: $('#autoUpdate'),
+    run: $('#runButton'),
+    clear: $('#clearButton'),
+    copy: $('#copyButton'),
+    download: $('#downloadFileButton'),
+    exportZip: $('#exportZip'),
+    fileInput: $('#fileInput'),
+    upload: $('#uploadButton'),
+    previewFrame: $('#previewFrame'),
+    browserFrame: $('#browserFrame'),
+    fullscreen: $('#fullscreenButton'),
+    openPreview: $('#openPreviewTab'),
+    saveStatus: $('#saveStatus'),
+    lineInfo: $('#lineInfo'),
+    charInfo: $('#charInfo'),
+    helpButton: $('#helpButton'),
+    syntaxHelpButton: $('#syntaxHelpButton'),
+    modal: $('#helpModal'),
+    closeHelp: $('#closeHelp'),
+    tryExample: $('#tryExample'),
+    toast: $('#toast')
   };
 
   const FILE_META = {
@@ -106,7 +141,9 @@
       if (tab) tab.classList.toggle('active', isActive);
     });
     els.currentFileLabel.textContent = FILE_META[file].name;
-    els.languageIndicator.textContent = els.languageMode.value === 'arabic' ? (file === 'html' ? 'لغة ود فيصل الطبيعية' : 'أوامر عربية مبسطة') : (file === 'html' ? 'HTML' : file === 'css' ? 'CSS' : 'JavaScript');
+    els.languageIndicator.textContent = els.languageMode.value === 'arabic'
+      ? (file === 'html' ? 'لغة ود فيصل الطبيعية' : 'أوامر عربية مبسطة')
+      : (file === 'html' ? 'HTML' : file === 'css' ? 'CSS' : 'JavaScript');
     updateEditorStats();
     FILE_META[file].editor.focus({ preventScroll: true });
   }
@@ -145,14 +182,13 @@
       if (typeof saved.css === 'string') els.css.value = saved.css;
       if (typeof saved.js === 'string') els.js.value = saved.js;
       if (saved.mode === 'arabic' || saved.mode === 'native') els.languageMode.value = saved.mode;
-    } catch (_) { /* إذا كانت بيانات الحفظ تالفة نستعمل المثال الافتراضي. */ }
+    } catch (_) { /* تجاهل بيانات الحفظ التالفة */ }
   }
 
   function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
   }
 
-  // يستوعب الصيغة الجديدة الطبيعية، ويظل يقبل الصيغة القديمة للتوافق مع مشاريع المستخدم السابقة.
   function cleanDslLine(line) {
     let cleaned = String(line || '').trim();
     const legacySyntax = cleaned.startsWith('/');
@@ -206,7 +242,6 @@
       if (kind === 'fontSize' || kind === 'padding' || kind === 'radius') return { kind, value: toCssLength(raw) };
       if (kind === 'shadow') return { kind, value: ({ 'خفيف':'0 3px 12px #0002', 'متوسط':'0 8px 25px #0003', 'قوي':'0 12px 35px #0005', 'بدون':'none', 'none':'none' })[raw] || 'none' };
     }
-    // لون مفرد في ملف الألوان يعني تغيير خلفية المعاينة، مثل: أزرق، أبيض، بنفسجي.
     if (isColorToken(value)) return { kind: 'background', value: resolveColor(value) };
     return null;
   }
@@ -294,7 +329,6 @@
       }
 
       if (isStyleLine(line) || isInteractionLine(line)) continue;
-      // HTML الأصلي يظل مقبولاً في الوضع العربي، سطر بسطر.
       if (/^(?:<!doctype|<\/?[a-z][^>]*>|<!--|<style\b|<script\b)/i.test(line)) {
         blocks.push(original);
         continue;
@@ -329,7 +363,6 @@
       } else if ((match = line.match(/^(?:بطاقة|كرت)\s*(.*)$/i))) {
         blocks.push(`<article class="wf-card">${escapeHtml(match[1])}</article>`);
       } else {
-        // في اللغة العربية الطبيعية أي سطر غير معروف يتحول إلى نص عادي بدلاً من طلب علامات خاصة.
         blocks.push(`<p>${escapeHtml(line)}</p>`);
       }
     }
@@ -360,7 +393,6 @@
           continue;
         }
         if (!source.allowRaw) continue;
-        // سطور الأوامر الأخرى لا يجب أن تتسرب إلى ملف CSS الخام.
         if (isHtmlCommand(line) || isInteractionLine(line)) continue;
         declarations.custom.push(original);
       }
@@ -386,7 +418,6 @@
         const line = cleanDslLine(original);
         if (!line) continue;
 
-        // تنقل بين صفحات معرفة بأمر «صفحة الأولى» و«صفحة الثانية».
         let match = line.match(/^(?:عند الضغط على|عند النقر على|لما أضغط على|لما اضغط على|عندما أضغط على|إذا ضغطت على|اذا ضغطت على)\s+(?:زر|الزر)\s+(.+?)\s+(?:انتقل(?:ي)?\s*(?:(?:إلى|الى)\s*الصفحة|للصفحة)|افتح الصفحة|روح للصفحة)\s+(.+)$/i);
         if (match) {
           const buttonText = stripQuotes(match[1]);
@@ -396,7 +427,6 @@
           continue;
         }
 
-        // فتح رابط عند الضغط: «عند الضغط على زر القناة افتح الرابط https://...».
         match = line.match(/^(?:عند الضغط على|عند النقر على|لما أضغط على|لما اضغط على|عندما أضغط على|إذا ضغطت على|اذا ضغطت على)\s+(?:زر|الزر)\s+(.+?)\s+(?:افتح الرابط|افتح|انتقل للرابط|اذهب للرابط)\s+(.+)$/i);
         if (match) {
           const buttonText = stripQuotes(match[1]);
@@ -406,7 +436,6 @@
           continue;
         }
 
-        // رسالة عند الضغط؛ الصياغة مرنة ولا تتطلب علامات اقتباس.
         match = line.match(/^(?:عند الضغط على|عند النقر على|لما أضغط على|لما اضغط على|عندما أضغط على|إذا ضغطت على|اذا ضغطت على)\s+(?:زر|الزر)\s+(.+?)\s+(?:اعرض رسالة|أعرض رسالة|اظهر رسالة|أظهر رسالة|اعرض تنبيه|أظهر تنبيه|اظهر تنبيه|قول لي|قل لي)\s+(.+)$/i);
         if (match) {
           const buttonText = stripQuotes(match[1]);
@@ -423,7 +452,6 @@
         if (source.allowRaw) raw.push(original);
       }
     }
-    // التهيئة العامة لنظام الصفحات حتى تعمل أوامر التنقل من غير كتابة JavaScript.
     const pageRuntime = `\n(function(){const pages=[...document.querySelectorAll('.wf-page')];if(!pages.length)return;window.__wfGoToPage=function(n){const target=Math.max(1,Math.min(pages.length,Number(n)||1));pages.forEach((p,i)=>{p.classList.toggle('active',i===target-1);p.setAttribute('aria-hidden',i===target-1?'false':'true');});window.scrollTo({top:0,behavior:'smooth'});};window.__wfGoToPage(1);})();\n`;
     return [...raw, ...generated, pageRuntime].filter(Boolean).join('\n');
 
@@ -435,7 +463,13 @@
 
   function pageNumberFromArabic(value) {
     const v = stripQuotes(value).trim();
-    const map = { 'الأولى':1,'اولى':1,'أولى':1,'واحدة':1,'واحد':1,'1':1,'الرئيسية':1,'الرئيسيه':1,'رئيسية':1,'الثانية':2,'الثانيه':2,'ثانية':2,'اثنين':2,'اتنين':2,'2':2,'الثالثة':3,'الثالثه':3,'ثالثة':3,'ثلاثة':3,'تلاتة':3,'3':3,'الرابعة':4,'الرابعه':4,'رابعة':4,'4':4,'الخامسة':5,'الخامسه':5,'خامسة':5,'5':5 };
+    const map = {
+      'الأولى':1,'اولى':1,'أولى':1,'واحدة':1,'واحد':1,'1':1,'الرئيسية':1,'الرئيسيه':1,'رئيسية':1,
+      'الثانية':2,'الثانيه':2,'ثانية':2,'اثنين':2,'اتنين':2,'2':2,
+      'الثالثة':3,'الثالثه':3,'ثالثة':3,'ثلاثة':3,'تلاتة':3,'3':3,
+      'الرابعة':4,'الرابعه':4,'رابعة':4,'4':4,
+      'الخامسة':5,'الخامسه':5,'خامسة':5,'5':5
+    };
     return map[v] || map[v.replace(/^ال/, '')] || Number(v) || 0;
   }
 
@@ -490,7 +524,9 @@
 
   function switchLanguageMode() {
     const arabic = els.languageMode.value === 'arabic';
-    els.languageIndicator.textContent = arabic ? (activeFile === 'html' ? 'لغة ود فيصل الطبيعية' : 'أوامر عربية مبسطة') : (activeFile === 'html' ? 'HTML' : activeFile === 'css' ? 'CSS' : 'JavaScript');
+    els.languageIndicator.textContent = arabic
+      ? (activeFile === 'html' ? 'لغة ود فيصل الطبيعية' : 'أوامر عربية مبسطة')
+      : (activeFile === 'html' ? 'HTML' : activeFile === 'css' ? 'CSS' : 'JavaScript');
     $$('.command-chip').forEach(button => { button.disabled = !arabic; });
     saveProject();
     renderPreview();
@@ -532,7 +568,6 @@
     }
   }
 
-  // مولّد ZIP مدمج: يضم الملفات الثلاثة ومشروع Android أصلياً قابلاً للبناء عبر GitHub Actions.
   const crcTable = (() => {
     const table = new Uint32Array(256);
     for (let n = 0; n < 256; n++) {
@@ -849,7 +884,7 @@ android {
       setBuildStatus('failure', 'رابط المستودع غير صحيح', 'الصق رابطاً بالشكل https://github.com/username/repository');
       return;
     }
-    try { localStorage.setItem('wadFaisalGithubRepo', repo.htmlUrl); } catch (_) { /* التخزين اختياري */ }
+    try { localStorage.setItem('wadFaisalGithubRepo', repo.htmlUrl); } catch (_) { /* اختياري */ }
     els.checkBuildStatus.disabled = true;
     setBuildStatus('running', 'جارٍ فحص GitHub Actions', 'يتم طلب حالة أحدث عملية بناء للمستودع العام.');
     try {
@@ -986,7 +1021,6 @@ android {
     els.gutter.scrollTop = event.target.scrollTop;
   }
 
-  // ربط الأحداث
   els.start.addEventListener('click', beginJourney);
   els.showIntro.addEventListener('click', openHelp);
   els.backHome.addEventListener('click', goHome);
@@ -1048,10 +1082,8 @@ android {
   document.addEventListener('keydown', event => { if (event.key === 'Escape') closeHelpModal(); });
   els.tryExample.addEventListener('click', useExample);
 
-  // إتاحة مولّد ZIP الداخلي لمساحة تحويل الصور مع المحافظة على وظيفة التصدير الحالية.
   window.WadFaisalBuildZip = buildZip;
 
-  // بدء التشغيل
   els.html.value = DEFAULTS.html;
   els.css.value = DEFAULTS.css;
   els.js.value = DEFAULTS.js;
@@ -1064,7 +1096,6 @@ android {
 
 /* ============================================================
    ميزة مستقلة: تحليل صور واجهات المستخدم وتوليد HTML/CSS/JS عبر Gemini.
-   ملاحظة: المفتاحان مضمّنان علناً بناءً على طلب مالك المشروع.
    ============================================================ */
 (() => {
   'use strict';
@@ -1096,13 +1127,17 @@ android {
   };
   if (!page.workspace || !page.generate) return;
 
-  // المفاتيح التي زوّد بها مالك الموقع، الأحدث يُجرَّب أولاً ثم البديل.
-  // أي مفتاح داخل JavaScript عام يمكن لزوار الموقع استخراجه.
+  // المفتاح المحدث والمعدل الذي تم تجربته بنجاح
   const GEMINI_API_KEYS = [
-    'AQ.Ab8RN6I6Kfo8jJJEawUVNdE5uTK8AA5GYbRc0VqvlV9-JAMT6g',
-    'AQ.Ab8RN6IU8Ihr0tChrgD8Z1mVwIWf8PjXaVDfELY5hiQwm1Flug'
+    'AQ.Ab8RN6JYPMQSFtP4e4hDbB9UPjQKAZ4psBSc2m57mj-CNZkX1g'
   ];
-  const GEMINI_MODEL = 'gemini-3.8-flash';
+
+  const GEMINI_MODELS = [
+    'gemini-3.5-flash',
+    'gemini-3.8-flash',
+    'gemini-2.5-flash'
+  ];
+
   const FILES = {
     html: { name: 'index.html', element: page.html },
     css: { name: 'style.css', element: page.css },
@@ -1210,7 +1245,6 @@ android {
   }
 
   async function imageToJpegData(file) {
-    // ضغط الصورة لتقليل حجم الطلب مع الحفاظ على تفاصيل التصميم.
     if (typeof createImageBitmap === 'function') {
       const bitmap = await createImageBitmap(file);
       const maxSide = 1600;
@@ -1246,59 +1280,112 @@ android {
   function extractJson(response) {
     const parts = response?.candidates?.[0]?.content?.parts || [];
     let text = parts.map(part => part.text || '').join('\n').trim();
-    if (!text) throw new Error('الذكاء الاصطناعي رجّع نتيجة فارغة. جرّب وصفاً أوضح أو صوراً أقل.');
+    if (!text) {
+      const finishReason = response?.candidates?.[0]?.finishReason;
+      if (finishReason === 'SAFETY') {
+        throw new Error('Gemini رفض المحتوى لأسباب أمان. جرب وصف مختلف أو صور أقل.');
+      }
+      throw new Error('Gemini رجع نتيجة فارغة. جرب وصف أوضح أو صور أقل.');
+    }
     text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
     const first = text.indexOf('{');
     const last = text.lastIndexOf('}');
     if (first >= 0 && last > first) text = text.slice(first, last + 1);
     let result;
     try { result = JSON.parse(text); }
-    catch (_) { throw new Error('وصلتنا نتيجة لكن تنسيق الملفات غير مكتمل. اضغط توليد مرة أخرى.'); }
+    catch (_) {
+      try {
+        const fixed = text.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']').replace(/\n/g, '\\n').replace(/\r/g, '');
+        result = JSON.parse(fixed);
+      } catch (_2) {
+        throw new Error('تنسيق JSON غير مكتمل. جرب التوليد مرة أخرى — أحياناً Gemini يقطع الرد لو الصور كبيرة.');
+      }
+    }
     const html = typeof result.html === 'string' ? result.html : (typeof result['index.html'] === 'string' ? result['index.html'] : '');
     const css = typeof result.css === 'string' ? result.css : (typeof result['style.css'] === 'string' ? result['style.css'] : '');
     const js = typeof result.js === 'string' ? result.js : (typeof result['script.js'] === 'string' ? result['script.js'] : '');
-    if (!html.trim() || !css.trim()) throw new Error('النتيجة ما فيها HTML وCSS كاملين. جرّب توليد مرة ثانية.');
+    if (!html.trim() || !css.trim()) throw new Error('النتيجة ما فيها HTML وCSS كاملين. جرب صور أوضح أو وصف أقل.');
     return { html, css, js };
   }
 
   async function callGemini(parts) {
     let lastError = null;
-    for (let index = 0; index < GEMINI_API_KEYS.length; index++) {
-      const apiKey = GEMINI_API_KEYS[index];
-      try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts }],
-            generationConfig: { responseMimeType: 'application/json', temperature: 0.2 }
-          })
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          const detail = data?.error?.message || `HTTP ${response.status}`;
-          lastError = new Error(detail);
-          // جرّب المفتاح البديل عند مشاكل المفتاح أو الحصة، لا عند أخطاء الطلب العادية.
-          if ([400, 401, 403, 429].includes(response.status) && index < GEMINI_API_KEYS.length - 1) continue;
-          throw lastError;
+    let triedModels = [];
+
+    for (let modelIndex = 0; modelIndex < GEMINI_MODELS.length; modelIndex++) {
+      const model = GEMINI_MODELS[modelIndex];
+      triedModels.push(model);
+
+      for (let keyIndex = 0; keyIndex < GEMINI_API_KEYS.length; keyIndex++) {
+        const apiKey = GEMINI_API_KEYS[keyIndex];
+        if (!apiKey || apiKey === 'ضع_المفتاح_الجديد_هنا') {
+          lastError = new Error('مفتاح API غير مضبوط. ضع مفتاحك من AI Studio.');
+          continue;
         }
-        return extractJson(data);
-      } catch (error) {
-        lastError = error;
-        if (index === GEMINI_API_KEYS.length - 1) break;
+
+        try {
+          // التعديل هنا: تمرير المفتاح في الرابط ?key= بدلاً من الهيدر
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                contents: [{ role: 'user', parts }],
+                generationConfig: {
+                  responseMimeType: 'application/json',
+                  temperature: 0.2
+                }
+              })
+            }
+          );
+
+          const data = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            const detail = data?.error?.message || `HTTP ${response.status}`;
+            lastError = new Error(`[${model}] ${detail}`);
+            if (response.status === 404) break;
+            if ([400, 401, 403, 429].includes(response.status)) continue;
+            throw lastError;
+          }
+
+          return extractJson(data);
+        } catch (error) {
+          lastError = error;
+          if (error.message.includes('404')) break;
+        }
       }
     }
+
     const message = lastError?.message || 'تعذر الاتصال بخدمة Gemini.';
-    if (/API key|authentication|unauthenticated|credential|permission|access token|401/i.test(message)) {
-      throw new Error('مفتاح API لم يُقبل من Gemini. راجع المفتاح وصلاحيته في Google AI Studio.');
+    const triedList = triedModels.join(' → ');
+
+    if (/API key|authentication|unauthenticated|credential|permission|access token|401|403/i.test(message)) {
+      throw new Error(
+        'مفتاح API لم يُقبل. الأسباب المحتملة:\n' +
+        '1. المفتاح ملغي أو محظور (احصل على مفتاح جديد من aistudio.google.com/apikey)\n' +
+        '2. المفتاح غير مقيّد — Gemini يرفض المفاتيح غير المقيّدة. قيّده على Generative Language API\n' +
+        '3. المشروع ما عليه تفعيل Gemini API\n' +
+        `الموديلات اللي جربناها: ${triedList}`
+      );
     }
+
     if (/quota|rate|429|resource exhausted/i.test(message)) {
-      throw new Error('تم الوصول إلى حد الاستخدام أو الطلبات. جرّب لاحقاً أو استخدم مفتاحاً لديه حصة متاحة.');
+      throw new Error('وصلت حد الاستخدام. جرّب بعد دقيقة أو استخدم مفتاح ثاني. الموديلات المجربة: ' + triedList);
     }
+
     if (/fetch|network|failed to fetch|load failed/i.test(message)) {
-      throw new Error('الاتصال فشل. تأكد من الإنترنت وافتح الموقع عبر HTTPS ثم جرّب مرة أخرى.');
+      throw new Error('الاتصال فشل. تأكد من الإنترنت وافتح الموقع عبر HTTPS.');
     }
-    throw new Error(message.slice(0, 260));
+
+    if (/model_not_found|not found|404/i.test(message)) {
+      throw new Error(`الموديل غير متاح لمفتاحك. جربنا: ${triedList}. راجع الموديلات المتاحة في AI Studio.`);
+    }
+
+    throw new Error(message.slice(0, 400));
   }
 
   async function generateFromImages() {
@@ -1317,11 +1404,9 @@ android {
       const prompt = [
         'You are an expert front-end developer. Analyze the attached screenshot(s) of a website or app UI and recreate the visible design as three separate production-quality files.',
         'Return ONLY a valid JSON object with exactly these string keys: "html", "css", "js". Do not use markdown fences.',
-        'html must be a complete standalone index.html document in Arabic-friendly UTF-8 where appropriate. Link to style.css and script.js using relative paths. Do not put CSS or JS inline unless absolutely needed for a small preview-only fallback.',
-        'css must be the complete style.css, responsive for mobile and desktop, closely matching the screenshots: layout, spacing, typography, colors, borders, shadows, radii and visible states.',
-        'js must be the complete script.js, implementing visible interactions where reasonably inferable. Use accessible controls and safe DOM practices. Do not use external libraries unless necessary; no backend secrets and no unsafe eval.',
-        'When several screenshots are provided, treat them as screens/pages/states of the same project unless the prompt says otherwise. Make navigation and buttons connect these screens where appropriate.',
-        'If screenshot text is readable, reproduce it as accurately as possible. Use placeholder assets only for imagery that cannot be represented otherwise. Do not claim any hidden backend feature is real when only a screenshot is provided.',
+        'html must be a complete standalone index.html document in Arabic-friendly UTF-8 where appropriate. Link to style.css and script.js using relative paths.',
+        'css must be the complete style.css, responsive for mobile and desktop, closely matching the screenshots.',
+        'js must be the complete script.js, implementing visible interactions where reasonably inferable.',
         `Additional user instructions (Arabic): ${page.prompt.value.trim() || 'أعد إنشاء الواجهة الظاهرة بأقرب شكل ممكن.'}`,
         `Current image count: ${selectedImages.length}.`
       ].join('\n\n');
